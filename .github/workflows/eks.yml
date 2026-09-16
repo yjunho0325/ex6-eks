@@ -1,5 +1,5 @@
-# DOCKER
-name: GitOps DOCKER CICD Pipeline
+# EKS
+name: GitOps EKS CICD Pipeline
 on:
   push:
     branches:
