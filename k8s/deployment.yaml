@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: nginx-container
-        image: yjunho/nginx:1.31.3-v1
+        image: yjunho/nginx:146ce155a2cc817fda34c7712efaebf1e4f48dd0
         ports:
         - containerPort: 80
 ---
