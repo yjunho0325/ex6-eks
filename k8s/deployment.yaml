@@ -1,24 +1,57 @@
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: argocd-server-ingress
-  namespace: argocd
-  annotations:
-    # 기존에 잘 되는 인그레스들과 동일한 그룹명을 넣어주세요
-    alb.ingress.kubernetes.io/group.name: std08-shared-alb
-    # 기존 어노테이션 유지
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+  name: nginx-deployment
 spec:
-  ingressClassName: alb
-  rules:
-    - http:
-        paths:
-          - path: /argocd
-            pathType: Prefix
-            backend:
-              service:
-                name: argocd-server
-                port:
-                  number: 80
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx-web-label
+  template:
+    metadata:
+      labels:
+        app: nginx-web-label
+    spec:
+      containers:
+      - name: nginx-container
+        image: yjunho/nginx:1.31.3-v1
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-svc
+spec:
+  type: LoadBalancer
+  selector:
+    app: nginx-web-label
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+# ---
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: argocd-server-ingress
+#   namespace: argocd
+#   annotations:
+#     # 기존에 잘 되는 인그레스들과 동일한 그룹명을 넣어주세요
+#     alb.ingress.kubernetes.io/group.name: std08-shared-alb
+#     # 기존 어노테이션 유지
+#     alb.ingress.kubernetes.io/scheme: internet-facing
+#     alb.ingress.kubernetes.io/target-type: ip
+#     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+# spec:
+#   ingressClassName: alb
+#   rules:
+#   - http:
+#       paths:
+#         - path: /argocd
+#           pathType: Prefix
+#           backend:
+#             service:
+#               name: argocd-server
+#               port:
+#                 number: 80
