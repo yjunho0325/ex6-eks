@@ -51,26 +51,26 @@ metadata:
     # HTTP 접속 시 HTTPS로 리다이렉션(선택사항, 권장)
     alb.ingress.kubernetes.io/ssl-redirect: "443"
     # 경로 재설정
-    alb.ingress.kubernetes.io/transforms.nginx-service: >
-      [
-        {
-          "type": "url-rewrite",
-          "urlRewriteConfig": {
-            "rewrites": [
-              {
-                "regex": "^\\/nginx(?:\\/(.*))?$",
-                "replace": "/$1"
-              }
-            ]
-          }
-        }
-      ]
+    # alb.ingress.kubernetes.io/transforms.nginx-service: >
+    #   [
+    #     {
+    #       "type": "url-rewrite",
+    #       "urlRewriteConfig": {
+    #         "rewrites": [
+    #           {
+    #             "regex": "^\\/nginx(?:\\/(.*))?$",
+    #             "replace": "/$1"
+    #           }
+    #         ]
+    #       }
+    #     }
+    #   ]
 spec: # 로드밸런서의 리스너에 대한 설정
   ingressClassName: alb
   rules:
     - http:
         paths:
-          - path: /nginx
+          - path: /
             pathType: Prefix
             backend:
               service:
