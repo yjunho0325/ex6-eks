@@ -25,35 +25,55 @@ metadata:
   name: nginx-svc
   namespace: default
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: nginx-web-label
   ports:
   - protocol: TCP
     port: 80
     targetPort: 80
-# ---
-# apiVersion: networking.k8s.io/v1
-# kind: Ingress
-# metadata:
-#   name: argocd-server-ingress
-#   namespace: argocd
-#   annotations:
-#     # 기존에 잘 되는 인그레스들과 동일한 그룹명을 넣어주세요
-#     alb.ingress.kubernetes.io/group.name: std08-shared-alb
-#     # 기존 어노테이션 유지
-#     alb.ingress.kubernetes.io/scheme: internet-facing
-#     alb.ingress.kubernetes.io/target-type: ip
-#     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
-# spec:
-#   ingressClassName: alb
-#   rules:
-#   - http:
-#       paths:
-#         - path: /argocd
-#           pathType: Prefix
-#           backend:
-#             service:
-#               name: argocd-server
-#               port:
-#                 number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: alb-base-ingress
+  annotations:  # 보안 그룹 등 AWS에 대한 설정
+    # 보안그룹 설정 (ALL-sg)
+    # alb.ingress.kubernetes.io/security-groups: sg-0aad846b8ae2e9d42
+    # internet-facing: 외부 로드밸런서(IP 부여), internet: 내부
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    # ip(Pod의 IP로 트래픽 전달)
+    # instance: EC2 인스턴스를 대상으로 하는 타켓 그룹 생성
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    # HTTPS 인증서 정의 (인증서 ARN)
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-southeast-2:925047940866:certificate/9570418b-4a9d-4268-8c66-fdd6b0e5c3da
+    # HTTP 접속 시 HTTPS로 리다이렉션(선택사항, 권장)
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    # 경로 재설정
+    alb.ingress.kubernetes.io/transforms.nginx-service: >
+      [
+        {
+          "type": "url-rewrite",
+          "urlRewriteConfig": {
+            "rewrites": [
+              {
+                "regex": "^\\/nginx(?:\\/(.*))?$",
+                "replace": "/$1"
+              }
+            ]
+          }
+        }
+      ]
+spec: # 로드밸런서의 리스너에 대한 설정
+  ingressClassName: alb
+  rules:
+    - http:
+        paths:
+          - path: /nginx
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx-svc
+                port:
+                  number: 80
